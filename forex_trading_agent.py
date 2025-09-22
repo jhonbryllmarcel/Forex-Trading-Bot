@@ -325,21 +325,24 @@ class ForexTradingAgent:
                 confidence_score += 12
                 reasons.append("CCI overbought reversal signal")
             
-            # Parabolic SAR (with proper Series handling)
-            # Parabolic SAR (with proper Series handling)
-            if not pd.isna(latest['psar']) and not pd.isna(prev['psar']):
-                # Use .iloc[0] to get scalar values from Series
-                current_psar = latest['psar'] if pd.api.types.is_scalar(latest['psar']) else latest['psar'].iloc[0]
-                prev_psar = prev['psar'] if pd.api.types.is_scalar(prev['psar']) else prev['psar'].iloc[0]
-    
-                if latest['close'] > current_psar and prev['close'] <= prev_psar:
-                    buy_signals += 1
-                    confidence_score += 18
-                    reasons.append("Parabolic SAR bullish signal")
-                elif latest['close'] < current_psar and prev['close'] >= prev_psar:
-                    sell_signals += 1
-                    confidence_score += 18
-                    reasons.append("Parabolic SAR bearish signal")
+            # Parabolic SAR (fixed pandas Series handling)
+            try:
+                if not pd.isna(latest['psar']) and not pd.isna(prev['psar']):
+                    # Safely extract scalar values
+                    current_psar = float(latest['psar'])
+                    prev_psar = float(prev['psar'])
+                    
+                    if latest['close'] > current_psar and prev['close'] <= prev_psar:
+                        buy_signals += 1
+                        confidence_score += 18
+                        reasons.append("Parabolic SAR bullish signal")
+                    elif latest['close'] < current_psar and prev['close'] >= prev_psar:
+                        sell_signals += 1
+                        confidence_score += 18
+                        reasons.append("Parabolic SAR bearish signal")
+            except (ValueError, TypeError, KeyError):
+                # Skip PSAR analysis if there are issues
+                pass
             
             # 200 SMA trend filter (very important for forex)
             if latest['close'] > latest['sma_200']:
