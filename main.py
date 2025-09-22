@@ -4,6 +4,7 @@ from forex_trading_agent import ForexTradingAgent
 import asyncio
 import os
 import logging
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -49,7 +50,17 @@ def health():
     return jsonify({
         "service": "healthy",
         "bot_status": agent_status,
-        "thread_alive": bot_thread.is_alive() if 'bot_thread' in globals() else False
+        "bot_thread_alive": bot_thread.is_alive() if 'bot_thread' in globals() else False
+    })
+
+@app.route('/ping')
+def ping():
+    """Simple ping endpoint for external monitoring (UptimeRobot)"""
+    return jsonify({
+        "status": "alive",
+        "timestamp": time.time(),
+        "bot_running": agent_status["running"],
+        "uptime": "ok"
     })
 
 @app.route('/restart')
@@ -72,4 +83,5 @@ if __name__ == "__main__":
     # Use Render's dynamic port, fallback to 10000 for local testing
     port = int(os.environ.get("PORT", 10000))
     logger.info(f"Starting Flask app on port {port}")
+    logger.info("Ready for external monitoring (UptimeRobot recommended)")
     app.run(host="0.0.0.0", port=port, debug=False)
