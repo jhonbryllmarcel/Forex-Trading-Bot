@@ -1,11 +1,11 @@
 services:
-  - type: worker
+  - type: web
     name: forex-trading-bot
     env: python
     plan: free
-    pythonVersion: 3.11.9  # <--- IMPORTANT
+    pythonVersion: 3.11.9
     buildCommand: "pip install --upgrade pip setuptools wheel && pip install -r requirements.txt"
-    startCommand: "python forex_trading_agent.py"
+    startCommand: "python main.py"
     envVars:
       - key: OPENAI_API_KEY
         sync: false
