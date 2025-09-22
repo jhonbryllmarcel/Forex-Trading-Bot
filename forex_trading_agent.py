@@ -208,140 +208,169 @@ class ForexTradingAgent:
             sell_signals = 0
             
             # RSI Analysis
-            if latest['rsi'] < 30:
-                buy_signals += 1
-                confidence_score += 25
-                reasons.append(f"RSI oversold at {latest['rsi']:.1f}")
-            elif latest['rsi'] > 70:
-                sell_signals += 1
-                confidence_score += 25
-                reasons.append(f"RSI overbought at {latest['rsi']:.1f}")
-            elif 30 <= latest['rsi'] <= 35 and prev['rsi'] < 30:
-                buy_signals += 1
-                confidence_score += 15
-                reasons.append(f"RSI recovering from oversold ({latest['rsi']:.1f})")
-            elif 65 <= latest['rsi'] <= 70 and prev['rsi'] > 70:
-                sell_signals += 1
-                confidence_score += 15
-                reasons.append(f"RSI declining from overbought ({latest['rsi']:.1f})")
+            if pd.notna(latest['rsi']):
+                if latest['rsi'] < 30:
+                    buy_signals += 1
+                    confidence_score += 25
+                    reasons.append(f"RSI oversold at {latest['rsi']:.1f}")
+                elif latest['rsi'] > 70:
+                    sell_signals += 1
+                    confidence_score += 25
+                    reasons.append(f"RSI overbought at {latest['rsi']:.1f}")
+                elif 30 <= latest['rsi'] <= 35 and pd.notna(prev['rsi']) and prev['rsi'] < 30:
+                    buy_signals += 1
+                    confidence_score += 15
+                    reasons.append(f"RSI recovering from oversold ({latest['rsi']:.1f})")
+                elif 65 <= latest['rsi'] <= 70 and pd.notna(prev['rsi']) and prev['rsi'] > 70:
+                    sell_signals += 1
+                    confidence_score += 15
+                    reasons.append(f"RSI declining from overbought ({latest['rsi']:.1f})")
             
             # MACD Analysis (very important for forex)
-            if (latest['macd'] > latest['macd_signal'] and 
-                prev['macd'] <= prev['macd_signal']):
-                buy_signals += 1
-                confidence_score += 30
-                reasons.append("MACD bullish crossover")
-            elif (latest['macd'] < latest['macd_signal'] and 
-                  prev['macd'] >= prev['macd_signal']):
-                sell_signals += 1
-                confidence_score += 30
-                reasons.append("MACD bearish crossover")
+            if (pd.notna(latest['macd']) and pd.notna(latest['macd_signal']) and 
+                pd.notna(prev['macd']) and pd.notna(prev['macd_signal'])):
+                
+                if (latest['macd'] > latest['macd_signal'] and 
+                    prev['macd'] <= prev['macd_signal']):
+                    buy_signals += 1
+                    confidence_score += 30
+                    reasons.append("MACD bullish crossover")
+                elif (latest['macd'] < latest['macd_signal'] and 
+                      prev['macd'] >= prev['macd_signal']):
+                    sell_signals += 1
+                    confidence_score += 30
+                    reasons.append("MACD bearish crossover")
             
             # MACD histogram momentum
-            if latest['macd_histogram'] > prev['macd_histogram'] > prev_2['macd_histogram']:
-                buy_signals += 1
-                confidence_score += 15
-                reasons.append("MACD momentum strengthening (bullish)")
-            elif latest['macd_histogram'] < prev['macd_histogram'] < prev_2['macd_histogram']:
-                sell_signals += 1
-                confidence_score += 15
-                reasons.append("MACD momentum weakening (bearish)")
+            if (pd.notna(latest['macd_histogram']) and pd.notna(prev['macd_histogram']) and 
+                pd.notna(prev_2['macd_histogram'])):
+                
+                if latest['macd_histogram'] > prev['macd_histogram'] > prev_2['macd_histogram']:
+                    buy_signals += 1
+                    confidence_score += 15
+                    reasons.append("MACD momentum strengthening (bullish)")
+                elif latest['macd_histogram'] < prev['macd_histogram'] < prev_2['macd_histogram']:
+                    sell_signals += 1
+                    confidence_score += 15
+                    reasons.append("MACD momentum weakening (bearish)")
             
             # Stochastic Analysis
-            if latest['stoch_k'] < 20 and latest['stoch_d'] < 20:
-                buy_signals += 1
-                confidence_score += 20
-                reasons.append("Stochastic oversold")
-            elif latest['stoch_k'] > 80 and latest['stoch_d'] > 80:
-                sell_signals += 1
-                confidence_score += 20
-                reasons.append("Stochastic overbought")
+            if (pd.notna(latest['stoch_k']) and pd.notna(latest['stoch_d'])):
+                if latest['stoch_k'] < 20 and latest['stoch_d'] < 20:
+                    buy_signals += 1
+                    confidence_score += 20
+                    reasons.append("Stochastic oversold")
+                elif latest['stoch_k'] > 80 and latest['stoch_d'] > 80:
+                    sell_signals += 1
+                    confidence_score += 20
+                    reasons.append("Stochastic overbought")
             
             # Stochastic crossover
-            if (latest['stoch_k'] > latest['stoch_d'] and 
-                prev['stoch_k'] <= prev['stoch_d'] and 
-                latest['stoch_k'] < 50):
-                buy_signals += 1
-                confidence_score += 15
-                reasons.append("Stochastic bullish crossover")
-            elif (latest['stoch_k'] < latest['stoch_d'] and 
-                  prev['stoch_k'] >= prev['stoch_d'] and 
-                  latest['stoch_k'] > 50):
-                sell_signals += 1
-                confidence_score += 15
-                reasons.append("Stochastic bearish crossover")
+            if (pd.notna(latest['stoch_k']) and pd.notna(latest['stoch_d']) and 
+                pd.notna(prev['stoch_k']) and pd.notna(prev['stoch_d'])):
+                
+                if (latest['stoch_k'] > latest['stoch_d'] and 
+                    prev['stoch_k'] <= prev['stoch_d'] and 
+                    latest['stoch_k'] < 50):
+                    buy_signals += 1
+                    confidence_score += 15
+                    reasons.append("Stochastic bullish crossover")
+                elif (latest['stoch_k'] < latest['stoch_d'] and 
+                      prev['stoch_k'] >= prev['stoch_d'] and 
+                      latest['stoch_k'] > 50):
+                    sell_signals += 1
+                    confidence_score += 15
+                    reasons.append("Stochastic bearish crossover")
             
             # EMA Analysis (trend following for forex)
-            if latest['close'] > latest['ema_8'] > latest['ema_21'] > latest['ema_50']:
-                buy_signals += 1
-                confidence_score += 25
-                reasons.append("Strong bullish EMA alignment")
-            elif latest['close'] < latest['ema_8'] < latest['ema_21'] < latest['ema_50']:
-                sell_signals += 1
-                confidence_score += 25
-                reasons.append("Strong bearish EMA alignment")
-            elif latest['close'] > latest['ema_21'] and prev['close'] <= prev['ema_21']:
-                buy_signals += 1
-                confidence_score += 20
-                reasons.append("Price breaking above EMA21")
-            elif latest['close'] < latest['ema_21'] and prev['close'] >= prev['ema_21']:
-                sell_signals += 1
-                confidence_score += 20
-                reasons.append("Price breaking below EMA21")
+            if (pd.notna(latest['ema_8']) and pd.notna(latest['ema_21']) and 
+                pd.notna(latest['ema_50'])):
+                
+                if latest['close'] > latest['ema_8'] > latest['ema_21'] > latest['ema_50']:
+                    buy_signals += 1
+                    confidence_score += 25
+                    reasons.append("Strong bullish EMA alignment")
+                elif latest['close'] < latest['ema_8'] < latest['ema_21'] < latest['ema_50']:
+                    sell_signals += 1
+                    confidence_score += 25
+                    reasons.append("Strong bearish EMA alignment")
+                elif (pd.notna(prev['ema_21']) and
+                      latest['close'] > latest['ema_21'] and prev['close'] <= prev['ema_21']):
+                    buy_signals += 1
+                    confidence_score += 20
+                    reasons.append("Price breaking above EMA21")
+                elif (pd.notna(prev['ema_21']) and
+                      latest['close'] < latest['ema_21'] and prev['close'] >= prev['ema_21']):
+                    sell_signals += 1
+                    confidence_score += 20
+                    reasons.append("Price breaking below EMA21")
             
             # Bollinger Bands Analysis
-            bb_position = (latest['close'] - latest['bb_lower']) / (latest['bb_upper'] - latest['bb_lower'])
-            if bb_position <= 0.1:  # Near lower band
-                buy_signals += 1
-                confidence_score += 20
-                reasons.append("Price near lower Bollinger Band")
-            elif bb_position >= 0.9:  # Near upper band
-                sell_signals += 1
-                confidence_score += 20
-                reasons.append("Price near upper Bollinger Band")
+            if (pd.notna(latest['bb_upper']) and pd.notna(latest['bb_lower']) and 
+                pd.notna(latest['close'])):
+                
+                bb_position = (latest['close'] - latest['bb_lower']) / (latest['bb_upper'] - latest['bb_lower'])
+                if bb_position <= 0.1:  # Near lower band
+                    buy_signals += 1
+                    confidence_score += 20
+                    reasons.append("Price near lower Bollinger Band")
+                elif bb_position >= 0.9:  # Near upper band
+                    sell_signals += 1
+                    confidence_score += 20
+                    reasons.append("Price near upper Bollinger Band")
             
             # Bollinger Band squeeze detection
-            if latest['bb_width'] < df['bb_width'].rolling(20).mean() * 0.8:
-                confidence_score += 10
-                reasons.append("Bollinger Band squeeze - breakout potential")
+            if pd.notna(latest['bb_width']):
+                avg_bb_width = df['bb_width'].rolling(20).mean().iloc[-1]
+                if pd.notna(avg_bb_width) and latest['bb_width'] < avg_bb_width * 0.8:
+                    confidence_score += 10
+                    reasons.append("Bollinger Band squeeze - breakout potential")
             
             # Williams %R
-            if latest['williams_r'] < -80:
-                buy_signals += 1
-                confidence_score += 15
-                reasons.append("Williams %R oversold")
-            elif latest['williams_r'] > -20:
-                sell_signals += 1
-                confidence_score += 15
-                reasons.append("Williams %R overbought")
+            if pd.notna(latest['williams_r']):
+                if latest['williams_r'] < -80:
+                    buy_signals += 1
+                    confidence_score += 15
+                    reasons.append("Williams %R oversold")
+                elif latest['williams_r'] > -20:
+                    sell_signals += 1
+                    confidence_score += 15
+                    reasons.append("Williams %R overbought")
             
             # CCI Analysis
-            if latest['cci'] < -100 and latest['cci'] > prev['cci']:
-                buy_signals += 1
-                confidence_score += 12
-                reasons.append("CCI oversold reversal signal")
-            elif latest['cci'] > 100 and latest['cci'] < prev['cci']:
-                sell_signals += 1
-                confidence_score += 12
-                reasons.append("CCI overbought reversal signal")
+            if pd.notna(latest['cci']) and pd.notna(prev['cci']):
+                if latest['cci'] < -100 and latest['cci'] > prev['cci']:
+                    buy_signals += 1
+                    confidence_score += 12
+                    reasons.append("CCI oversold reversal signal")
+                elif latest['cci'] > 100 and latest['cci'] < prev['cci']:
+                    sell_signals += 1
+                    confidence_score += 12
+                    reasons.append("CCI overbought reversal signal")
             
-            # Parabolic SAR (fixed pandas Series handling)
+            # Parabolic SAR (FIXED - proper pandas Series handling)
             try:
-                if not pd.isna(latest['psar']) and not pd.isna(prev['psar']):
-                    # Safely extract scalar values
-                    current_psar = float(latest['psar'])
-                    prev_psar = float(prev['psar'])
+                if (pd.notna(latest['psar']) and pd.notna(prev['psar']) and
+                    pd.notna(latest['close']) and pd.notna(prev['close'])):
                     
-                    if latest['close'] > current_psar and prev['close'] <= prev_psar:
+                    # Extract scalar values properly
+                    current_psar = latest['psar']
+                    prev_psar = prev['psar']
+                    current_close = latest['close']
+                    prev_close = prev['close']
+                    
+                    # Check for PSAR signal changes
+                    if current_close > current_psar and prev_close <= prev_psar:
                         buy_signals += 1
                         confidence_score += 18
                         reasons.append("Parabolic SAR bullish signal")
-                    elif latest['close'] < current_psar and prev['close'] >= prev_psar:
+                    elif current_close < current_psar and prev_close >= prev_psar:
                         sell_signals += 1
                         confidence_score += 18
                         reasons.append("Parabolic SAR bearish signal")
-            except (ValueError, TypeError, KeyError):
+            except Exception as e:
                 # Skip PSAR analysis if there are issues
+                logger.warning(f"PSAR analysis skipped: {str(e)}")
                 pass
             
             # 200 SMA trend filter (very important for forex)
