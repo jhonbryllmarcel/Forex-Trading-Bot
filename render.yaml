@@ -1,0 +1,14 @@
+services:
+  - type: worker
+    name: forex-trading-bot
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python forex_trading_agent.py"
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TWELVE_DATA_API_KEY
+        sync: false
