@@ -1,0 +1,1 @@
+worker: python forex_trading_agent.py
